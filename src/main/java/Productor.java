@@ -1,8 +1,7 @@
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.*;
 
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 public class Productor {
 
@@ -42,7 +41,25 @@ public class Productor {
         String key = "testKey";
         String value = "testValue";
 
-        prod.send(new ProducerRecord<>(topic,partition,key,value));
+        // Síncrono
+        /*
+        try {
+            prod.send(new ProducerRecord<>(topic,partition,key,value)).get(); //.get() asegura una confirmación
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }*/
+
+        // Asíncrono: Usa un callback para estar a la espera de una respuesta
+        final ProducerRecord<String, String> record = new ProducerRecord<>(topic,partition,key,value);
+        prod.send(record, new Callback() {
+            @Override
+            public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+                if(e != null){
+                    System.out.println("Send failed for record");
+                }
+            }
+        });
+
         prod.close();
     }
 }
